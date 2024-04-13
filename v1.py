@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -17,10 +17,10 @@ X_full.drop(['Price'], axis=1, inplace=True)
 #split train data
 X_train, X_valid, y_train, y_valid = train_test_split(X_full, y, train_size=0.8, test_size=0.2 , random_state=0)
 
-categorical_cols = [cname for cname in X_train.columns if X_train[cname].nunique() < 10 and 
-                        X_train[cname].dtype == "object"]
+categorical_cols = [cname for cname in X_full.columns if X_full[cname].nunique() < 10 and 
+                        X_full[cname].dtype == "object"]
 
-numerical_cols = [cname for cname in X_train.columns if X_train[cname].dtype in ['int64', 'float64']]
+numerical_cols = [cname for cname in X_full.columns if X_full[cname].dtype in ['int64', 'float64']]
 
 cols = categorical_cols + numerical_cols
 X_train = X_train[cols]
@@ -48,6 +48,7 @@ my_pipeline = Pipeline(steps=[('preprocessor', preproccesor),
                               ('model', model)
                               ])
 
+
 # preprocessing of training data 
 my_pipeline.fit(X_train,y_train)
 
@@ -56,3 +57,8 @@ mae = mean_absolute_error(pred, y_valid)
 
 print(mae) 
 
+#cross val
+scores = -1 * cross_val_score(my_pipeline, X_full , y, cv=5,
+                              scoring='neg_mean_absolute_error')
+
+print(scores.mean())
